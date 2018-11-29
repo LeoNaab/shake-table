@@ -158,12 +158,15 @@ class StepperMotor:
     self.wave = []
     for step in trajectory:
       if step == 1: #forward
+        print('step 1')
         self.wave.append(pigpio.pulse(1<<self.pin1 | 1<<self.pin2, 0, us))
         self.wave.append(pigpio.pulse(1<<self.pin2, 1<<self.pin1, us))
       elif step == -1:
+        print('step -1')
         self.wave.append(pigpio.pulse(1<<self.pin1, 1<<self.pin2, us))
         self.wave.append(pigpio.pulse(0, 1<<self.pin1 | 1<<self.pin2, us))
       elif step == 0:
+        print('step 0')
         self.wave.append(pigpio.pulse(0, 1<<self.pin1 | 1<<self.pin2, us))
         self.wave.append(pigpio.pulse(0, 1<<self.pin1 | 1<<self.pin2, us))
 
@@ -174,6 +177,7 @@ class StepperMotor:
     old_id = -1
     wave_pos = 0
     while wave_pos <= len(self.wave) - self.wave_size:
+      print(wave_pos)
       slice = self.wave[wave_pos:wave_pos + self.wave_size]
       wave_pos += self.wave_size
 
@@ -185,10 +189,11 @@ class StepperMotor:
       while self.pi.wave_tx_at() != new_id:
         sleep(0.01)
 
-      old_id = new_id
+      #old_id = new_id
       
-      if old_id >= 0:
-        self.pi.wave_delete(old_id)
+      #if old_id >= 0:
+      #  self.pi.wave_delete(old_id)
+      self.pi.wave_delete(new_id)
 
       #old_id = new_id
       
@@ -196,20 +201,21 @@ class StepperMotor:
 
 if __name__ == '__main__':
   pi = pigpio.pi()
-  motor = StepperMotor(pi, 2, 3)
+  motor = StepperMotor(pi, 3, 4)
 
   #motor.waveStep([1])
   #sub_trajectory = [1]*10000 + [0]*10000 + [1]*10000
   #trajectory = []
   #for i in range(10):
   #  trajectory += sub_trajectory
+  #motor.waveStep([1])
 
-
-  trajectory = list(np.ones(20000).astype(int))
+  trajectory = list(np.ones(25800).astype(int)) + list(np.zeros(5200).astype(int)) + list(-1*np.ones(25800).astype(int))
+  #print(trajectory)
   #trajectory = list(np.random.randint(0,2,20000).astype(int))
   
   #motor.waveChainInput(trajectory, 100)
-  motor.runLongWave(trajectory, 25)
+  motor.runLongWave(trajectory, 10000)
   #for i in range(5000):
   #  motor.doStepAndDelay(cw[0])
   #  motor.doStepAndDelay(cw[1])
