@@ -64,12 +64,17 @@ class hardware_safety():
         #returns right switch, left switch states
         return GPIO.input(26), GPIO.input(19)
     
-    def load_trajectory(self, earthquakeFile = 'earthquake.csv', percentEarthquake=1, dt = 0.001, amplitude_scaling = 0.5):
+    def load_trajectory(self, earthquakeFile = 'earthquake.csv', percentEarthquake=1, dt = 0.001, amplitude_scaling = 0.5, time_stretch = 50):
         self.earthquake = earthquake_reader(earthquakeFile, percentEarthquake = percentEarthquake, dt = dt, step_size = 2*np.pi/180/25, amplitude_scaling = amplitude_scaling)
         self.earthquake.fit_spline()
-        self.earthquake.interpolate_earthquake(time_stretch = 50)
+        self.earthquake.interpolate_earthquake(time_stretch = time_stretch)
         
         #earthquake.sine(0.2)
+        self.earthquake.calculate_steps()
+        
+    def load_sine_wave(self, frequency):
+        self.earthquake.sine(frequency)
+        #self.earthquake.interpolate_earthquake(time_stretch = time_stretch)
         self.earthquake.calculate_steps()
 
         
@@ -93,7 +98,8 @@ class hardware_safety():
             while(time.time()-start<dt):
                 wait = 1
             a[i] = (((time.time()-start)-dt)**2)**0.5
-            
+        self.a = a
+        
         self.run_time = time.time() - start
 
 class earthquake_reader():
@@ -124,7 +130,7 @@ class earthquake_reader():
     def sine(self, frequency):
         amplitude = np.max(np.abs(self.amplitude_interpolated))
         for i in range(self.amplitude_interpolated.shape[0]):
-            self.amplitude_interpolated[i] = np.sin(i*frequency*2*np.pi*self.dt)*amplitude
+            self.amplitude_interpolated[i] = np.sin(i*frequency*2*np.pi*self.dt)*amplitude/5
         
     def fit_spline(self):
         self.f = interpolate.interp1d(self.time, self.amplitude) #, kind='cubic')
